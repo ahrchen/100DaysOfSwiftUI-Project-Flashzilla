@@ -27,14 +27,9 @@ struct CardView: View {
                     : .white
                         .opacity(1 - Double(abs(offset.width / 50)))
                 )
-            
-                .background(
-                    differentiateWithoutColor
-                    ? nil
-                    : RoundedRectangle(cornerRadius: 25, style: .continuous)
-                        .fill(offset.width > 0 ? .green : .red)
-                )
-                .shadow(radius: 10)
+                .cardBackground(offset)
+
+                
             
             VStack {
                 if voiceOverEnabled {
@@ -80,6 +75,41 @@ struct CardView: View {
             isShowingAnswer.toggle()
         }
         .animation(.spring(), value: offset)
+    }
+}
+
+struct CardBackground: ViewModifier {
+    @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
+    var offset: CGSize
+    
+    func body(content: Content) -> some View {
+        content
+            .background(
+                differentiateWithoutColor
+                ? nil
+                :
+                RoundedRectangle(cornerRadius: 25, style: .continuous)
+                    .fill(getCardColor(offset: offset))
+                )
+            .shadow(radius: 10)
+    }
+    
+    func getCardColor(offset: CGSize) -> Color  {
+        if offset.width >= 0 {
+            if offset.width == 0 {
+                return Color.white
+            } else {
+                return Color.green
+            }
+        } else {
+            return Color.red
+        }
+    }
+}
+
+extension View {
+    func cardBackground(_ offset: CGSize) -> some View {
+        modifier(CardBackground(offset: offset))
     }
 }
 
