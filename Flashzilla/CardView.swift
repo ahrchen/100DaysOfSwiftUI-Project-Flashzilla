@@ -11,7 +11,7 @@ struct CardView: View {
     @Environment(\.accessibilityVoiceOverEnabled) var voiceOverEnabled
     @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
     let card: Card
-    let removal: (() -> Void)? 
+    let removal: ((Bool) -> Void)?
     
     @State private var isShowingAnswer = false
     @State private var offset = CGSize.zero
@@ -64,8 +64,10 @@ struct CardView: View {
                     if abs(offset.width) > 100 {
                         if offset.width < 0 {
                             feedback.notificationOccurred(.error)
+                            removal?(false)
+                        } else {
+                            removal?(true)
                         }
-                        removal?()
                     } else {
                         offset = .zero
                     }

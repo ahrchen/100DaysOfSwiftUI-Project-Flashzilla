@@ -11,7 +11,7 @@ struct ContentView: View {
     @Environment(\.accessibilityVoiceOverEnabled) var voiceOverEnabled
     @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
     @State private var cards = [Card]()
-    
+    @State private var lastSuccess = false
     @State private var timeRemaining = 100
     let timer = Timer.publish(every: 1, on:.main, in: .common).autoconnect()
     
@@ -35,21 +35,24 @@ struct ContentView: View {
                     .clipShape(Capsule())
                 
                 ZStack {
-                    ForEach(0..<cards.count, id: \.self) { index in
-                        CardView(card: cards[index]) {
-                            withAnimation {
-                                removeCard(at: index)
+                    ForEach(cards) { card in
+                        if let cardIndex = cards.firstIndex(where: {$0.id == card.id}) {
+                            CardView(card: card) { success in
+                                removeCard(at: cardIndex, isSuccess: success)
                             }
-                        }
-                            .stacked(at: index, in: cards.count)
-                            .allowsHitTesting(index == cards.count - 1)
-                            .accessibilityHidden(index < cards.count - 1)
+                            .stacked(at: cardIndex, in:cards.count)
+                            .allowsHitTesting(cardIndex == cards.count - 1)
+                            .accessibilityHidden(cardIndex < cards.count - 1)
                             .accessibilityAddTraits(.isButton)
+                        }
+                        
                     }
+                    
                 }
                 .allowsHitTesting(timeRemaining > 0)
                 
-                if cards.isEmpty {
+                if (lastSuccess && cards.isEmpty) || timeRemaining == 0 {
+                    
                     Button("Start Again", action: resetCards)
                         .padding()
                         .background(.white)
@@ -82,7 +85,7 @@ struct ContentView: View {
                     HStack {
                         Button {
                             withAnimation {
-                                removeCard(at: cards.count - 1)
+                                removeCard(at: cards.count - 1, isSuccess: false )
                             }
                         } label: {
                             Image(systemName: "xmark.circle")
@@ -96,7 +99,7 @@ struct ContentView: View {
                         
                         Button {
                             withAnimation {
-                                removeCard(at: cards.count - 1)
+                                removeCard(at: cards.count - 1, isSuccess: true )
                             }
                         } label: {
                             Image(systemName: "checkmark.circle")
@@ -133,8 +136,21 @@ struct ContentView: View {
         .sheet(isPresented: $showingEditScreen, onDismiss: resetCards, content: EditCards.init)
         .onAppear(perform: resetCards)
     }
+
     
-    func removeCard(at index: Int) {
+    func removeCard(at index: Int, isSuccess: Bool) {
+        if cards.count < 0 {
+            return
+        }
+        let card = cards[index]
+        if !isSuccess {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                cards.insert(card, at: 0)
+            }
+            lastSuccess = false
+        } else {
+            lastSuccess = true
+        }
         cards.remove(at: index)
         if cards.isEmpty {
             isActive = false
@@ -153,6 +169,10 @@ struct ContentView: View {
                 cards = decoded
             }
         }
+    }
+    
+    func updateCount() {
+        print("UPDATING")
     }
 }
 
