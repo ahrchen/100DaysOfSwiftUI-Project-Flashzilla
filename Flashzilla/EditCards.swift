@@ -13,6 +13,8 @@ struct EditCards: View {
     @State private var newPrompt = ""
     @State private var newAnswer = ""
     
+    let savePath = FileManager.documentDirectory.appendingPathComponent("SavedCards")
+    
     var body: some View {
         NavigationView {
             List {
@@ -48,17 +50,11 @@ struct EditCards: View {
     }
     
     func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "Cards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
-        }
+        cards = Card.loadData()
     }
     
     func saveData() {
-        if let data = try? JSONEncoder().encode(cards) {
-            UserDefaults.standard.set(data, forKey: "Cards")
-        }
+        Card.saveData(cards: cards)
     }
     
     func addCard() {
@@ -82,6 +78,8 @@ struct EditCards: View {
         newPrompt = ""
         newAnswer = ""
     }
+    
+    
 }
 
 struct EditCards_Previews: PreviewProvider {

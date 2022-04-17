@@ -35,6 +35,10 @@ struct ContentView: View {
                     .clipShape(Capsule())
                 
                 ZStack {
+                    if (!lastSuccess && cards.isEmpty) {
+                        Text("Retrieving Last Card...")
+                    }
+                                 
                     ForEach(cards) { card in
                         if let cardIndex = cards.firstIndex(where: {$0.id == card.id}) {
                             CardView(card: card) { success in
@@ -143,6 +147,7 @@ struct ContentView: View {
             return
         }
         let card = cards[index]
+        
         if !isSuccess {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 cards.insert(card, at: 0)
@@ -152,7 +157,8 @@ struct ContentView: View {
             lastSuccess = true
         }
         cards.remove(at: index)
-        if cards.isEmpty {
+        
+        if lastSuccess && cards.isEmpty {
             isActive = false
         }
     }
@@ -164,11 +170,7 @@ struct ContentView: View {
     }
     
     func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "Cards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
-        }
+        cards = Card.loadData()
     }
     
     func updateCount() {
